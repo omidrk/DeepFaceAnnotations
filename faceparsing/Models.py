@@ -168,6 +168,7 @@ class Resnet18Plus(nn.Module):
         self.init_weight()
 
     def forward(self, x):
+        H, W = x.size()[2:]
         x = self.conv1(x)
         x = F.relu(self.bn1(x))
         x = self.maxpool(x)
@@ -180,6 +181,10 @@ class Resnet18Plus(nn.Module):
         feat32 = self.layer4(feat16) # 1/32
         feat32Out = self.layer4Out(feat32)
 
+        feat8Out = F.interpolate(feat8Out, (H, W), mode='bilinear', align_corners=True)
+        feat16Out = F.interpolate(feat16Out, (H, W), mode='bilinear', align_corners=True)
+        feat32Out = F.interpolate(feat32Out, (H, W), mode='bilinear', align_corners=True)
+
         return feat8Out,feat16Out,feat32Out
 
     def init_weight(self):
@@ -189,15 +194,16 @@ class Resnet18Plus(nn.Module):
                 if not ly.bias is None: nn.init.constant_(ly.bias, 0)
 
     def get_params(self):
-        wd_params, nowd_params = [], []
-        for name, module in self.named_modules():
-            if isinstance(module, (nn.Linear, nn.Conv2d)):
-                wd_params.append(module.weight)
-                if not module.bias is None:
-                    nowd_params.append(module.bias)
-            elif isinstance(module,  nn.BatchNorm2d):
-                nowd_params += list(module.parameters())
-        return wd_params, nowd_params
+        wd_params, nowd_params, lr_mul_wd_params, lr_mul_nowd_params = [], [], [], []
+        for name, child in self.named_children():
+            child_wd_params, child_nowd_params = child.get_params()
+            if isinstance(child, ResNetOutput):
+                lr_mul_wd_params += child_wd_params
+                lr_mul_nowd_params += child_nowd_params
+            else:
+                wd_params += child_wd_params
+                nowd_params += child_nowd_params
+        return wd_params, nowd_params, lr_mul_wd_params, lr_mul_nowd_params
 
 
 
