@@ -193,16 +193,39 @@ class Resnet18Plus(nn.Module):
                 nn.init.kaiming_normal_(ly.weight, a=1)
                 if not ly.bias is None: nn.init.constant_(ly.bias, 0)
 
+    # def get_params(self):
+    #     wd_params, nowd_params, lr_mul_wd_params, lr_mul_nowd_params = [], [], [], []
+    #     for name, child in self.named_children():
+    #         if isinstance(child, (nn.Linear,nn.Conv2d)):
+    #             wd_params.append(child.weight)
+    #             if not child.bias is None:
+    #                 nowd_params.append(child.bias)
+    #         elif isinstance(child, nn.BatchNorm2d):
+    #             nowd_params += list(child.parameters())
+    #         if isinstance(child, ResNetOutput):
+    #             child_wd_params, child_nowd_params = child.get_params()
+    #             lr_mul_wd_params += child_wd_params
+    #             lr_mul_nowd_params += child_nowd_params
+    #         else:
+    #             child_wd_params, child_nowd_params = child.get_params()
+    #             wd_params += child_wd_params
+    #             nowd_params += child_nowd_params
+    #     return wd_params, nowd_params, lr_mul_wd_params, lr_mul_nowd_params
+
     def get_params(self):
         wd_params, nowd_params, lr_mul_wd_params, lr_mul_nowd_params = [], [], [], []
-        for name, child in self.named_children():
-            child_wd_params, child_nowd_params = child.get_params()
-            if isinstance(child, ResNetOutput):
+        for name, module in self.named_modules():
+            if isinstance(module, (nn.Linear, nn.Conv2d)):
+                wd_params.append(module.weight)
+                if not module.bias is None:
+                    nowd_params.append(module.bias)
+            elif isinstance(module,  nn.BatchNorm2d):
+                nowd_params += list(module.parameters())
+            elif isinstance(module, ResNetOutput):
+                child_wd_params, child_nowd_params = module.get_params()
                 lr_mul_wd_params += child_wd_params
                 lr_mul_nowd_params += child_nowd_params
-            else:
-                wd_params += child_wd_params
-                nowd_params += child_nowd_params
+
         return wd_params, nowd_params, lr_mul_wd_params, lr_mul_nowd_params
 
 
