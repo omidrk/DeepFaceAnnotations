@@ -25,12 +25,10 @@ class Optimizer(object):
         self.max_iter = float(max_iter)
         self.power = power
         self.it = 0
-        wd_params, nowd_params, lr_mul_wd_params, lr_mul_nowd_params = model.get_params()
+        wd_params, nowd_params = model.get_params()
         param_list = [
                 {'params': wd_params},
-                {'params': nowd_params, 'weight_decay': 0},
-                {'params': lr_mul_wd_params, 'lr_mul': True},
-                {'params': lr_mul_nowd_params, 'weight_decay': 0, 'lr_mul': True}]
+                {'params': nowd_params, 'weight_decay': 0}]
         self.optim = torch.optim.SGD(
                 param_list,
                 lr = lr0,

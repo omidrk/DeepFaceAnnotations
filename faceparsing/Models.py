@@ -213,7 +213,7 @@ class Resnet18Plus(nn.Module):
     #     return wd_params, nowd_params, lr_mul_wd_params, lr_mul_nowd_params
 
     def get_params(self):
-        wd_params, nowd_params, lr_mul_wd_params, lr_mul_nowd_params = [], [], [], []
+        wd_params, nowd_params = [], []
         for name, module in self.named_modules():
             if isinstance(module, (nn.Linear, nn.Conv2d)):
                 wd_params.append(module.weight)
@@ -221,12 +221,7 @@ class Resnet18Plus(nn.Module):
                     nowd_params.append(module.bias)
             elif isinstance(module,  nn.BatchNorm2d):
                 nowd_params += list(module.parameters())
-            elif isinstance(module, ResNetOutput):
-                child_wd_params, child_nowd_params = module.get_params()
-                lr_mul_wd_params += child_wd_params
-                lr_mul_nowd_params += child_nowd_params
+        return wd_params, nowd_params
 
-        return wd_params, nowd_params, lr_mul_wd_params, lr_mul_nowd_params
-
-
+#attention start Here
 
