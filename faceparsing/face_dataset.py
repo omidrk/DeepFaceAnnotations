@@ -46,6 +46,9 @@ class FaceMask(Dataset):
         img = Image.open(osp.join(self.rootpth, 'CelebA-HQ-img', impth))
         img = img.resize((512, 512), Image.BILINEAR)
         label = Image.open(osp.join(self.rootpth, 'mask', impth[:-3]+'png')).convert('P')
+        if self.mode == 'test':
+          img = img.resize((448, 448), Image.BILINEAR)
+          label = label.resize((448, 448), Image.BILINEAR)
         # print(np.unique(np.array(label)))
         if self.mode == 'train':
             im_lb = dict(im=img, lb=label)
