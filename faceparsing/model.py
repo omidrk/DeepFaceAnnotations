@@ -8,8 +8,8 @@ import torch.nn.functional as F
 import torchvision
 
 from faceparsing.resnet import Resnet18
-# from modules.bn import InPlaceABNSync as BatchNorm2d
 
+# This is Bisenet Architecture, we didnt use this in our code
 
 class ConvBNReLU(nn.Module):
     def __init__(self, in_chan, out_chan, ks=3, stride=1, padding=1, *args, **kwargs):

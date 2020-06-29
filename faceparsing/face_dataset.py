@@ -14,7 +14,10 @@ import cv2
 
 from faceparsing.transform import *
 
-
+# This is our data augmentation, Normalizing, Collor jitter, Horizontal flip and random 
+#Crop are used each time we send get request to this class.
+# every time it will return unique picture which is diffrent than original one
+# This class has also 3 diffrent mode for train test and validation
 
 class FaceMask(Dataset):
     def __init__(self, rootpth, cropsize=(640, 480), mode='train', *args, **kwargs):
@@ -49,7 +52,7 @@ class FaceMask(Dataset):
         if self.mode == 'test':
           img = img.resize((448, 448), Image.BILINEAR)
           label = label.resize((448, 448), Image.BILINEAR)
-        # print(np.unique(np.array(label)))
+        # if network is in test mode, none of the transformation will apply
         if self.mode == 'train':
             im_lb = dict(im=img, lb=label)
             im_lb = self.trans_train(im_lb)

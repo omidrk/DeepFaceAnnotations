@@ -27,7 +27,7 @@ class OhemCELoss(nn.Module):
             loss = loss[:self.n_min]
         return torch.mean(loss)
 
-
+# Not used Here
 class SoftmaxFocalLoss(nn.Module):
     def __init__(self, gamma, ignore_lb=255, *args, **kwargs):
         super(SoftmaxFocalLoss, self).__init__()

@@ -23,12 +23,15 @@ device = torch.device('cuda:0' if use_cuda else 'cpu')
 resnet18_url = 'https://download.pytorch.org/models/resnet18-5c106cde.pth'
 
 
+# this function will return simple conv2d
 def conv3x3(in_planes, out_planes, stride=1):
     """3x3 convolution with padding"""
     return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
                      padding=1, bias=False)
 
 
+# This is bsaic block for building ResNet 18
+# If input channel is not equal to output channel Basic block will downsample the input
 class BasicBlock(nn.Module):
     def __init__(self, in_chan, out_chan, stride=1):
         super(BasicBlock, self).__init__()
@@ -59,6 +62,8 @@ class BasicBlock(nn.Module):
         out = self.relu(out)
         return out
 
+# This will convert middle features with many channel to fixed 19 channel 
+# for calculating loss function and optimization
 class ResNetOutput(nn.Module):
     def __init__(self, in_chan, mid_chan, n_classes, *args, **kwargs):
         super(ResNetOutput, self).__init__()
@@ -88,6 +93,7 @@ class ResNetOutput(nn.Module):
                 nowd_params += list(module.parameters())
         return wd_params, nowd_params
 
+# This function will simply build 3 basic layer in ResNet architecture
 
 def create_layer_basic(in_chan, out_chan, bnum, stride=1):
     layers = [BasicBlock(in_chan, out_chan, stride=stride)]
@@ -95,7 +101,7 @@ def create_layer_basic(in_chan, out_chan, bnum, stride=1):
         layers.append(BasicBlock(out_chan, out_chan, stride=1))
     return nn.Sequential(*layers)
 
-
+# Base architecture of the resnet 18 
 class Resnet18(nn.Module):
     def __init__(self):
         super(Resnet18, self).__init__()
@@ -156,6 +162,7 @@ class Resnet18(nn.Module):
                 nowd_params += list(module.parameters())
         return wd_params, nowd_params
 
+# This is our target model. This model is based on ResNet18 and 3 output layer for loss function
 class Resnet18Plus(nn.Module):
     def __init__(self):
         super(Resnet18Plus, self).__init__()
@@ -199,25 +206,7 @@ class Resnet18Plus(nn.Module):
                 nn.init.kaiming_normal_(ly.weight, a=1)
                 if not ly.bias is None: nn.init.constant_(ly.bias, 0)
 
-    # def get_params(self):
-    #     wd_params, nowd_params, lr_mul_wd_params, lr_mul_nowd_params = [], [], [], []
-    #     for name, child in self.named_children():
-    #         if isinstance(child, (nn.Linear,nn.Conv2d)):
-    #             wd_params.append(child.weight)
-    #             if not child.bias is None:
-    #                 nowd_params.append(child.bias)
-    #         elif isinstance(child, nn.BatchNorm2d):
-    #             nowd_params += list(child.parameters())
-    #         if isinstance(child, ResNetOutput):
-    #             child_wd_params, child_nowd_params = child.get_params()
-    #             lr_mul_wd_params += child_wd_params
-    #             lr_mul_nowd_params += child_nowd_params
-    #         else:
-    #             child_wd_params, child_nowd_params = child.get_params()
-    #             wd_params += child_wd_params
-    #             nowd_params += child_nowd_params
-    #     return wd_params, nowd_params, lr_mul_wd_params, lr_mul_nowd_params
-
+    
     def get_params(self):
         wd_params, nowd_params = [], []
         for name, module in self.named_modules():
@@ -229,7 +218,9 @@ class Resnet18Plus(nn.Module):
                 nowd_params += list(module.parameters())
         return wd_params, nowd_params
 
-#attention start Here
+# Attention model start Here
+# This is Resnet with attention model. I used this for perpose of comparison
+# with our suggested model
 
 class ResidualBlock(nn.Module):
     def __init__(self, input_channels, output_channels, stride=1):
@@ -264,24 +255,8 @@ class ResidualBlock(nn.Module):
         out += residual
         return out
 
-    # def init_weight(self):
-    #     for ly in self.children():
-    #         if isinstance(ly, nn.Conv2d):
-    #             nn.init.kaiming_normal_(ly.weight, a=1)
-    #             if not ly.bias is None: nn.init.constant_(ly.bias, 0)
-
-    # def get_params(self):
-    #     wd_params, nowd_params = [], []
-    #     for name, module in self.named_modules():
-    #         if isinstance(module, nn.Linear) or isinstance(module, nn.Conv2d):
-    #             wd_params.append(module.weight)
-    #             if not module.bias is None:
-    #                 nowd_params.append(module.bias)
-    #         elif isinstance(module, nn.BatchNorm2d):
-    #             nowd_params += list(module.parameters())
-    #     return wd_params, nowd_params
-
-#Start 3 layer of attention here
+# I added 3 layer of resnet output to layers of attention for calculating the loss 
+# in the same way of the resnet 18
 
 class AttentionModule_pre(nn.Module):
 
@@ -361,24 +336,6 @@ class AttentionModule_pre(nn.Module):
         out_last = self.last_blocks(out)
 
         return out_last
-    
-    # def init_weight(self):
-    #     for ly in self.children():
-    #         if isinstance(ly, nn.Conv2d):
-    #             nn.init.kaiming_normal_(ly.weight, a=1)
-    #             if not ly.bias is None: nn.init.constant_(ly.bias, 0)
-
-    # def get_params(self):
-    #     wd_params, nowd_params = [], []
-    #     for name, module in self.named_modules():
-    #         if isinstance(module, nn.Linear) or isinstance(module, nn.Conv2d):
-    #             wd_params.append(module.weight)
-    #             if not module.bias is None:
-    #                 nowd_params.append(module.bias)
-    #         elif isinstance(module, nn.BatchNorm2d):
-    #             nowd_params += list(module.parameters())
-    #     return wd_params, nowd_params
-
 
 class AttentionModule_stage0(nn.Module):
     # input size is 112*112
@@ -470,25 +427,6 @@ class AttentionModule_stage0(nn.Module):
 
         return out_last
 
-
-    # def init_weight(self):
-    #     for ly in self.children():
-    #         if isinstance(ly, nn.Conv2d):
-    #             nn.init.kaiming_normal_(ly.weight, a=1)
-    #             if not ly.bias is None: nn.init.constant_(ly.bias, 0)
-
-    # def get_params(self):
-    #     wd_params, nowd_params = [], []
-    #     for name, module in self.named_modules():
-    #         if isinstance(module, nn.Linear) or isinstance(module, nn.Conv2d):
-    #             wd_params.append(module.weight)
-    #             if not module.bias is None:
-    #                 nowd_params.append(module.bias)
-    #         elif isinstance(module, nn.BatchNorm2d):
-    #             nowd_params += list(module.parameters())
-    #     return wd_params, nowd_params
-
-
 class AttentionModule_stage1(nn.Module):
     # input size is 56*56
     def __init__(self, in_channels, out_channels, size1=(56, 56), size2=(28, 28), size3=(14, 14)):
@@ -567,24 +505,6 @@ class AttentionModule_stage1(nn.Module):
         out_last = self.last_blocks(out)
 
         return out_last
-
-    # def init_weight(self):
-    #     for ly in self.children():
-    #         if isinstance(ly, nn.Conv2d):
-    #             nn.init.kaiming_normal_(ly.weight, a=1)
-    #             if not ly.bias is None: nn.init.constant_(ly.bias, 0)
-
-    # def get_params(self):
-    #     wd_params, nowd_params = [], []
-    #     for name, module in self.named_modules():
-    #         if isinstance(module, nn.Linear) or isinstance(module, nn.Conv2d):
-    #             wd_params.append(module.weight)
-    #             if not module.bias is None:
-    #                 nowd_params.append(module.bias)
-    #         elif isinstance(module, nn.BatchNorm2d):
-    #             nowd_params += list(module.parameters())
-    #     return wd_params, nowd_params
-
 
 class AttentionModule_stage2(nn.Module):
     # input image size is 28*28
@@ -730,7 +650,7 @@ class AttentionModule_stage3(nn.Module):
 
 
 
-#start whole network together
+#Put  whole network together
 
 class ResidualAttentionModel_448input(nn.Module):
     # for input size 448

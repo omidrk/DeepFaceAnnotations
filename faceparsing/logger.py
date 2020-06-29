@@ -8,7 +8,7 @@ import sys
 import logging
 
 import torch.distributed as dist
-
+# This will log our network to certain path
 
 def setup_logger(logpth):
     logfile = 'BiSeNet-{}.log'.format(time.strftime('%Y-%m-%d-%H-%M-%S'))
