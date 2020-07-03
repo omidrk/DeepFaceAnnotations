@@ -1,6 +1,6 @@
 # DeepFaceAnnotations
 
-1. Introduction
+## Introduction
 Facial key points prediction is the task where a neural
 network predicts the key points in a face image. Facial key
 points are relevant for a variety of tasks, such as face filters [11], emotion recognition [5], and so on. As far as I
@@ -8,7 +8,7 @@ know most of the pre-trained models can predict only a certain set of key points
 and lower skin, where the annotations are available [12]. In
 this paper we are looking to conduct a way which can predict key points not only for certain face attributes but for all
 attributes in the absence of annotations.
-1.1. Problem Statement
+## Problem Statement
 The task is predicting key points for each attributes of
 face by showing the image of the face only. First problem
 is we don’t have labeled key points for all attributes of face
